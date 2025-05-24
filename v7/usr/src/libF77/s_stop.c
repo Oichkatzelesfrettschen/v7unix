@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 s_stop(s, n)
 char *s;

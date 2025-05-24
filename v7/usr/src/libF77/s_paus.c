@@ -1,13 +1,16 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
 #define PAUSESIG 15
 
+static void waitpause(int);
 
 s_paus(s, n)
 char *s;
 long int n;
 {
 int i;
-int waitpause();
 
 fprintf(stderr, "PAUSE ");
 if(n > 0)
@@ -38,7 +41,9 @@ fprintf(stderr, "Execution resumes after PAUSE.\n");
 
 
 
-static waitpause()
+static void
+waitpause(int sig)
 {
-return;
+    (void)sig; /* unused parameter */
+    return;
 }
