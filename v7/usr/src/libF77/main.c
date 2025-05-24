@@ -2,16 +2,20 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <stdlib.h>
 
 int xargc;
 char **xargv;
+
+static void sigfdie();
+static void sigidie();
+static void sigdie(char *s);
 
 main(argc, argv, arge)
 int argc;
 char **argv;
 char **arge;
 {
-int sigfdie(), sigidie();
 
 xargc = argc;
 xargv = argv;

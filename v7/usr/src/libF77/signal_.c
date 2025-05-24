@@ -1,3 +1,5 @@
+#include <signal.h>
+
 signal_(sigp, procp)
 int *sigp, (**procp)();
 {
