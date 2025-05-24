@@ -1,4 +1,6 @@
-main()
+#include <stdio.h>
+
+int main(void)
 {
 	char buf[512*20];
 	int n;

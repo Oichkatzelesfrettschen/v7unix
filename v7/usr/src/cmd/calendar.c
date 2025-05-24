@@ -4,6 +4,7 @@
 
    used by calendar command
 */
+#include <stdio.h>
 #include <time.h>
 
 #define DAY (3600*24L)
@@ -22,10 +23,9 @@ char *month[] = {
 	"[Nn]ov",
 	"[Dd]ec"
 };
-struct tm *localtime();
+static void tprint(long t);
 
-tprint(t)
-long t;
+static void tprint(long t)
 {
 	struct tm *tm;
 	tm = localtime(&t);
@@ -33,7 +33,7 @@ long t;
 		month[tm->tm_mon], tm->tm_mon + 1, tm->tm_mday);
 }
 
-main()
+int main(void)
 {
 	long t;
 	time(&t);
