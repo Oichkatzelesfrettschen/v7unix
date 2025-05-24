@@ -103,13 +103,18 @@ char	*install();
 char	*malloc();
 char	*mktemp();
 char	*copy();
-long	ctol();
+long    ctol();
+
+/*
+ * Modern stdio implementations define stdout and stdin as macros that are not constant expressions.
+ * Initialise the descriptor arrays at runtime instead of using them in initialisers.
+ */
 int	hshval;
-FILE	*olist[11] = { stdout };
+FILE    *olist[11] = { NULL };
 int	okret;
 int	curout	= 0;
-FILE	*curfile = { stdout };
-FILE	*infile[10] = { stdin };
+FILE    *curfile = NULL;
+FILE    *infile[10] = { NULL };
 int	infptr	= 0;
 
 main(argc, argv)
@@ -121,6 +126,10 @@ char **argv;
 	int delexit(), catchsig();
 	register t;
 	int i;
+
+    olist[0] = stdout;
+    curfile = stdout;
+    infile[0] = stdin;
 
 #ifdef gcos
 #ifdef M4
