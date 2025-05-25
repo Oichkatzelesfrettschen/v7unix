@@ -64,7 +64,7 @@ main(argc,argv)
 	sname[0] = sp;
 	sp =+ slength("INITIAL") + 1;
 	sname[1] = 0;
-	if(yyparse(0)) exit(1);	/* error return code */
+	if(yyparse()) exit(1);	/* error return code */
 		/* may be disposed of: def, subs, dchar */
 	free1core();
 		/* may be gotten: tmpstat, foll, positions, gotof, nexts, nchar, state, atable, sfall, cpackflg */

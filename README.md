@@ -50,15 +50,17 @@ dpkg-buildpackage
 
 ## Building with CMake
 
-The new build system uses CMake with clang and bison. To build all available
-components, run:
+The new build system uses CMake with clang and bison.  CMake exports
+`compile_commands.json` so editors can understand the build.  To build all
+available components, run:
 
 ```sh
 cmake -B build -DCMAKE_C_COMPILER=clang
 cmake --build build
 ```
 
-Development dependencies can be installed using the helper script:
+Development dependencies (including `compiledb` and `ccache`) can be installed
+using the helper script:
 
 ```sh
 ./.codex/setup.sh
