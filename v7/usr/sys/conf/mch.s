@@ -67,6 +67,26 @@ dump:
 	beq	1b
 	mov	$27,(r0)
 .endif
+
+/*
+ * Calling convention:
+ *      jsr     pc,_func  ; arguments pushed on stack
+ *      r0 and r1 are scratch; return value in r0
+ */
+
+.globl  _sched_lock, _spinlock_lock, _spinlock_unlock
+
+.macro  SCHED_LOCK
+	mov	$_sched_lock,-(sp)
+	jsr	pc,_spinlock_lock
+	tst	(sp)+
+.endm
+
+.macro  SCHED_UNLOCK
+	mov	$_sched_lock,-(sp)
+	jsr	pc,_spinlock_unlock
+	tst	(sp)+
+.endm
 HT	= 0172440
 HTCS1	= HT+0
 HTWC	= HT+2

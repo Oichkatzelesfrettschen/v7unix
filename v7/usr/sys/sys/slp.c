@@ -8,6 +8,10 @@
 #include "../h/file.h"
 #include "../h/inode.h"
 #include "../h/buf.h"
+#include "../h/spinlock.h"
+
+/* Scheduler spinlock guarding run queue manipulations */
+spinlock_t sched_lock;
 
 #define SQSIZE 0100	/* Must be power of 2 */
 #define HASH(x)	(( (int) x >> 5) & (SQSIZE-1))
@@ -118,19 +122,25 @@ register caddr_t chan;
 setrq(p)
 struct proc *p;
 {
-	register struct proc *q;
-	register s;
+        register struct proc *q;
+        register s;
 
-	s = spl6();
-	for(q=runq; q!=NULL; q=q->p_link)
-		if(q == p) {
-			printf("proc on q\n");
-			goto out;
-		}
-	p->p_link = runq;
-	runq = p;
+        s = spl6();
+#ifndef SPINLOCK_UNIPROCESSOR
+        spinlock_lock(&sched_lock);
+#endif
+        for(q=runq; q!=NULL; q=q->p_link)
+                if(q == p) {
+                        printf("proc on q\n");
+                        goto out;
+                }
+        p->p_link = runq;
+        runq = p;
 out:
-	splx(s);
+#ifndef SPINLOCK_UNIPROCESSOR
+        spinlock_unlock(&sched_lock);
+#endif
+        splx(s);
 }
 
 /*
@@ -377,8 +387,11 @@ swtch()
 	if (save(u.u_qsav)==0 && save(u.u_rsav))
 		return;
 loop:
-	spl6();
-	runrun = 0;
+        spl6();
+#ifndef SPINLOCK_UNIPROCESSOR
+        spinlock_lock(&sched_lock);
+#endif
+        runrun = 0;
 	pp = NULL;
 	q = NULL;
 	n = 128;
@@ -399,17 +412,23 @@ loop:
 	 * If no process is runnable, idle.
 	 */
 	p = pp;
-	if(p == NULL) {
-		idle();
-		goto loop;
-	}
-	q = pq;
-	if(q == NULL)
-		runq = p->p_link;
-	else
-		q->p_link = p->p_link;
-	curpri = n;
-	spl0();
+        if(p == NULL) {
+#ifndef SPINLOCK_UNIPROCESSOR
+                spinlock_unlock(&sched_lock);
+#endif
+                idle();
+                goto loop;
+        }
+        q = pq;
+        if(q == NULL)
+                runq = p->p_link;
+        else
+                q->p_link = p->p_link;
+#ifndef SPINLOCK_UNIPROCESSOR
+        spinlock_unlock(&sched_lock);
+#endif
+        curpri = n;
+        spl0();
 	/*
 	 * The rsav (ssav) contents are interpreted in the new address space
 	 */
