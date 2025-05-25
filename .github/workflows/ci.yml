@@ -18,4 +18,4 @@ jobs:
       - name: Generate compile database
         run: compiledb -n cmake --build build
       - name: Lint YAML
-        run: pre-commit run --files .github/workflows/ci.yml
+        run: pre-commit run --files $(git ls-files '*.yml' '*.yaml')
