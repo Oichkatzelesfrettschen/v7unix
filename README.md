@@ -115,6 +115,13 @@ checking and additional theorem proving packages for Agda and Isabelle/HOL:
 ./.codex/setup.sh
 ```
 
+## Theorem Prover Configuration
+
+After installing the optional tools you can source `scripts/prover-env.sh` to
+add any detected provers to your `PATH`.  The helper script also sets
+`TLA_TOOLS_JAR` when a local `tla2tools.jar` is found so that `scripts/tla.sh`
+can run the model checker without additional arguments.
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
