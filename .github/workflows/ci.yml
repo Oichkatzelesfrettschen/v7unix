@@ -1,0 +1,19 @@
+name: CMake Build
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang bison flex clang-tidy cmake make python3-pip
+          pip3 install pre-commit
+      - name: Configure
+        run: cmake -B build -DCMAKE_C_COMPILER=clang
+      - name: Build
+        run: cmake --build build
+      - name: Lint YAML
+        run: pre-commit run --files .github/workflows/ci.yml

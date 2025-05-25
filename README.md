@@ -47,3 +47,19 @@ dpkg-buildpackage -S
 # make binary
 dpkg-buildpackage
 ```
+
+## Building with CMake
+
+The new build system uses CMake with clang and bison. To build all available
+components, run:
+
+```sh
+cmake -B build -DCMAKE_C_COMPILER=clang
+cmake --build build
+```
+
+Development dependencies can be installed using the helper script:
+
+```sh
+./.codex/setup.sh
+```
