@@ -10,6 +10,7 @@
 #include "../h/file.h"
 #include "../h/inode.h"
 #include "../h/acct.h"
+#include "../../../src-kernel/exo_mailbox.h"
 
 int	nulldev();
 int	nodev();
@@ -82,5 +83,6 @@ int	(*ldmpx)() = mpxchan;
 struct	proc	proc[NPROC];
 struct	text	text[NTEXT];
 struct	buf	bfreelist;
+mailbox_t proc_mailboxes[NPROC];
 struct	acct	acctbuf;
 struct	inode	*acctp;

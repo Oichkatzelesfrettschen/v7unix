@@ -13,6 +13,7 @@
 /* Scheduler spinlock guarding run queue manipulations */
 spinlock_t sched_lock;
 
+#include "../../../src-kernel/exo_mailbox.h"
 #define SQSIZE 0100	/* Must be power of 2 */
 #define HASH(x)	(( (int) x >> 5) & (SQSIZE-1))
 struct proc *slpque[SQSIZE];
@@ -489,6 +490,8 @@ retry:
 	rpp->p_time = 0;
 	rpp->p_cpu = 0;
 
+        rpp->p_mailbox = &proc_mailboxes[rpp - proc];
+        mailbox_init(rpp->p_mailbox);
 	/*
 	 * make duplicate entries
 	 * where needed

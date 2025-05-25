@@ -6,6 +6,7 @@
  * Other per process data (user.h)
  * is swapped with the process.
  */
+#include "../../../src-kernel/exo_mailbox.h"
 struct	proc {
 	char	p_stat;
 	char	p_flag;
@@ -23,6 +24,7 @@ struct	proc {
 	caddr_t p_wchan;	/* event process is awaiting */
 	struct text *p_textp;	/* pointer to text structure */
 	struct proc *p_link;	/* linked list of running processes */
+        mailbox_t *p_mailbox;
 	int	p_clktim;	/* time to alarm clock signal */
 };
 
