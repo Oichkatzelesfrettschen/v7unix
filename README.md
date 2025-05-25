@@ -57,8 +57,9 @@ dpkg-buildpackage
 ## Building with CMake
 
 The new build system uses CMake with clang and bison.  CMake exports
-`compile_commands.json` so editors can understand the build.  To build all
-available components, run:
+`compile_commands.json` so editors can understand the build.  The build
+now includes a small target that compiles the historical kernel sources.
+To build all available components, run:
 
 ```sh
 cmake -B build -DCMAKE_C_COMPILER=clang
