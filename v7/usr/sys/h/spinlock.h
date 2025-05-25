@@ -8,8 +8,11 @@
  * used.
  *
  * Define SPINLOCK_TICKET for a fair ticket based lock.
- * Define SPINLOCK_UNIPROCESSOR to compile the locking primitives
- * away on uniprocessor systems.
+ * Define SPINLOCK_UP to compile the locking primitives away on
+ * uniprocessor systems.
+ * Define SPINLOCK_SMP to force the locking primitives to be
+ * compiled in.  If neither macro is specified the code assumes
+ * a multiprocessor system.
  *
  * Typical usage:
  *      spinlock_t lock;
@@ -23,8 +26,30 @@
 
 #include <stddef.h>
 
+/*
+ * Determine whether locking code should be compiled in.  If SPINLOCK_UP is
+ * defined the primitives become no-ops.  Otherwise locking is enabled and
+ * SPINLOCK_SMP evaluates to 1.
+ */
+#ifndef SPINLOCK_UP
+#define SPINLOCK_UP 0
+#endif
+
+#ifndef SPINLOCK_SMP
+#if SPINLOCK_UP
+#define SPINLOCK_SMP 0
+#else
+#define SPINLOCK_SMP 1
+#endif
+#endif
+
 #ifndef SPINLOCK_DEFAULT_ALIGNMENT
 #define SPINLOCK_DEFAULT_ALIGNMENT 64
+#endif
+
+/* Alignment used for the spinlock structure */
+#ifndef SPINLOCK_ALIGNMENT
+#define SPINLOCK_ALIGNMENT SPINLOCK_DEFAULT_ALIGNMENT
 #endif
 
 static inline unsigned int spinlock_cacheline_size(void)
@@ -39,7 +64,7 @@ static inline unsigned int spinlock_cacheline_size(void)
 #endif
 }
 
-#ifdef SPINLOCK_UNIPROCESSOR
+#ifdef SPINLOCK_UP
 
 /* No locking needed on UP kernels */
 #define spinlock_t             int
@@ -47,17 +72,17 @@ static inline unsigned int spinlock_cacheline_size(void)
 #define spinlock_lock(l)       ((void)0)
 #define spinlock_unlock(l)     ((void)0)
 
-#else   /* !SPINLOCK_UNIPROCESSOR */
+#else   /* !SPINLOCK_UP */
 
 #ifndef SPINLOCK_TICKET
 typedef struct spinlock {
         volatile unsigned int lock;
-} __attribute__((aligned(SPINLOCK_DEFAULT_ALIGNMENT))) spinlock_t;
+} __attribute__((aligned(SPINLOCK_ALIGNMENT))) spinlock_t;
 #else
 typedef struct spinlock {
         volatile unsigned int next;
         volatile unsigned int owner;
-} __attribute__((aligned(SPINLOCK_DEFAULT_ALIGNMENT))) spinlock_t;
+} __attribute__((aligned(SPINLOCK_ALIGNMENT))) spinlock_t;
 #endif
 
 static inline void spinlock_init(spinlock_t *lk)
@@ -93,6 +118,6 @@ static inline void spinlock_unlock(spinlock_t *lk)
 #endif
 }
 
-#endif  /* !SPINLOCK_UNIPROCESSOR */
+#endif  /* !SPINLOCK_UP */
 
 #endif  /* _SYS_SPINLOCK_H_ */
