@@ -56,14 +56,13 @@ dpkg-buildpackage
 
 ## Building with CMake
 
-The new build system uses CMake with clang and bison.  CMake exports
-`compile_commands.json` so editors can understand the build.  The build
-now includes a small target that compiles the historical kernel sources.
-To build all available components, run:
+The project now targets the C23 language standard and prefers the latest
+clang compiler.  CMake generates `compile_commands.json` for tooling and
+can optionally drive Ninja.  To build all available components, run:
 
 ```sh
-cmake -B build -DCMAKE_C_COMPILER=clang
-cmake --build build
+cmake -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_C_STANDARD=23
+cmake --build build -j
 ```
 Optional spinlock features can be toggled with `SPINLOCK_UNIPROCESSOR`, `USE_TICKET_LOCK` and `SPINLOCK_DEBUG` (e.g. `cmake -B build -DSPINLOCK_DEBUG=ON`).
 
@@ -72,4 +71,16 @@ using the helper script:
 
 ```sh
 ./.codex/setup.sh
+```
+
+## Building with Meson
+
+A minimal [Meson](https://mesonbuild.com/) build description is also
+provided.  Meson drives Ninja and uses the same C23 toolchain.  To build
+the tests using Meson:
+
+```sh
+meson setup build
+ninja -C build
+ninja -C build test
 ```

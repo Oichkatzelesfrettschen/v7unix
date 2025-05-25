@@ -1,16 +1,22 @@
-cmake_minimum_required(VERSION 3.16)
-project(v7unix C)
+cmake_minimum_required(VERSION 3.20)
+project(v7unix C CXX)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_CLANG_TIDY clang-tidy)
 
 # Export compile_commands.json for tooling
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+enable_testing()
+
 # Use ccache when available for faster builds
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
     set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
 endif()
 
 include(FindBISON)
@@ -31,3 +37,4 @@ endif()
 
 add_subdirectory(v7/usr/src/cmd)
 add_subdirectory(kernel)
+add_subdirectory(tests)
