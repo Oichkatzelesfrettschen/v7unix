@@ -10,12 +10,17 @@ contemporary C compilers and system headers.
 ## Ticket spinlocks
 
 The kernel spinlock implementation includes an optional fair ticket
-lock.  Define `USE_TICKET_LOCK` when compiling to enable this variant.
-Ticket locks are recommended on multiprocessor machines where fairness
-is desirable; the default lock is faster but can starve under heavy
-contention.  Define `SPINLOCK_UNIPROCESSOR` to compile out locking on
-uniprocessor builds or `SPINLOCK_DEBUG` to instrument lock acquire and
-release with timing.
+lock.  Ticket locks are recommended on multiprocessor machines where
+fairness is desirable; the default lock is faster but can starve under
+heavy contention.  CMake exposes three options to tune the behaviour:
+
+* `SPINLOCK_UNIPROCESSOR` &ndash; compile out spinlocks entirely on
+  uniprocessor builds.
+* `USE_TICKET_LOCK` &ndash; enable the fair ticket lock variant.
+* `SPINLOCK_DEBUG` &ndash; instrument lock acquire and release with
+  timing information.
+
+Enable any of these with `-D<option>=ON` when invoking CMake.
 
 ## SVR4 compatibility
 
@@ -44,28 +49,41 @@ sudo apt-get install v7sed
 without verification", I've no idea how I go about removing
 that)
 
-To make the source and binary packages:
+To build the source and binary packages with CMake and Ninja:
 
-```
+```sh
 cd v7
-# make source
+cmake -G Ninja -B build
+ninja -C build
 dpkg-buildpackage -S
-# make binary
 dpkg-buildpackage
 ```
 
 ## Building with CMake
 
-The new build system uses CMake with clang and bison.  CMake exports
-`compile_commands.json` so editors can understand the build.  The build
-now includes a small target that compiles the historical kernel sources.
-To build all available components, run:
+The new build system uses CMake together with Ninja as the build tool.
+CMake exports `compile_commands.json` so editors can understand the
+build.  The build now includes a small target that compiles the
+historical kernel sources.  To build all available components, run:
 
 ```sh
-cmake -B build -DCMAKE_C_COMPILER=clang
-cmake --build build
+cmake -G Ninja -B build -DCMAKE_C_COMPILER=clang
+ninja -C build
 ```
-Optional spinlock features can be toggled with `SPINLOCK_UNIPROCESSOR`, `USE_TICKET_LOCK` and `SPINLOCK_DEBUG` (e.g. `cmake -B build -DSPINLOCK_DEBUG=ON`).
+Optional spinlock features can be toggled with `SPINLOCK_UNIPROCESSOR`,
+`USE_TICKET_LOCK` and `SPINLOCK_DEBUG` (e.g.
+`cmake -B build -G Ninja -DSPINLOCK_DEBUG=ON`).
+
+To cross-compile, specify a different compiler via `CMAKE_C_COMPILER`:
+
+```sh
+cmake -G Ninja -B build \
+  -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+  -DUSE_TICKET_LOCK=ON
+ninja -C build
+```
+
+Meson is another supported build system if you prefer its workflow.
 
 Development dependencies (including `compiledb` and `ccache`) can be installed
 using the helper script:
