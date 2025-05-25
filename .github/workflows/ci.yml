@@ -19,3 +19,5 @@ jobs:
         run: compiledb -n cmake --build build
       - name: Lint YAML
         run: pre-commit run --files $(git ls-files '*.yml' '*.yaml')
+      - name: Build and run tests
+        run: make check
