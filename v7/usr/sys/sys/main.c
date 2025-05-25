@@ -10,6 +10,7 @@
 #include "../h/seg.h"
 #include "../h/conf.h"
 #include "../h/buf.h"
+#include "../h/spinlock.h"
 
 /*
  * Initialization code.
@@ -30,7 +31,8 @@
 main()
 {
 
-	startup();
+       startup();
+       spinlock_init(&sched_lock);
 	/*
 	 * set up system process
 	 */

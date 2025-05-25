@@ -27,6 +27,8 @@ struct	proc {
 };
 
 extern struct proc proc[];	/* the proc table itself */
+#include "spinlock.h"
+extern spinlock_t sched_lock;   /* scheduler lock */
 
 /* stat codes */
 #define	SSLEEP	1		/* awaiting an event */

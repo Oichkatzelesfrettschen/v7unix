@@ -1,6 +1,7 @@
 #include "../h/param.h"
 #include "../h/systm.h"
 #include "../h/map.h"
+#include "../h/spinlock.h"
 
 /*
  * Allocate 'size' units from the given
@@ -47,10 +48,12 @@ register int a;
 	register struct map *bp;
 	register unsigned int t;
 
-	if ((bp = mp)==coremap && runin) {
-		runin = 0;
-		wakeup((caddr_t)&runin);	/* Wake scheduler when freeing core */
-	}
+        if ((bp = mp)==coremap && runin) {
+                spinlock_lock(&sched_lock);
+                runin = 0;
+                wakeup((caddr_t)&runin);        /* Wake scheduler when freeing core */
+                spinlock_unlock(&sched_lock);
+        }
 	for (; bp->m_addr<=a && bp->m_size!=0; bp++);
 	if (bp>mp && (bp-1)->m_addr+(bp-1)->m_size == a) {
 		(bp-1)->m_size += size;

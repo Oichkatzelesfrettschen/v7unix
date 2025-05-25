@@ -8,6 +8,9 @@
 #include "../h/file.h"
 #include "../h/inode.h"
 #include "../h/buf.h"
+#include "../h/spinlock.h"
+
+spinlock_t sched_lock;
 
 #define SQSIZE 0100	/* Must be power of 2 */
 #define HASH(x)	(( (int) x >> 5) & (SQSIZE-1))
@@ -51,10 +54,12 @@ caddr_t chan;
 			goto psig;
 		}
 		spl0();
-		if(runin != 0) {
-			runin = 0;
-			wakeup((caddr_t)&runin);
-		}
+               if(runin != 0) {
+                       spinlock_lock(&sched_lock);
+                       runin = 0;
+                       wakeup((caddr_t)&runin);
+                       spinlock_unlock(&sched_lock);
+               }
 		swtch();
 		if(issig())
 			goto psig;
@@ -121,16 +126,18 @@ struct proc *p;
 	register struct proc *q;
 	register s;
 
-	s = spl6();
-	for(q=runq; q!=NULL; q=q->p_link)
-		if(q == p) {
-			printf("proc on q\n");
-			goto out;
-		}
-	p->p_link = runq;
-	runq = p;
+       s = spl6();
+       spinlock_lock(&sched_lock);
+       for(q=runq; q!=NULL; q=q->p_link)
+               if(q == p) {
+                       printf("proc on q\n");
+                       goto out;
+               }
+       p->p_link = runq;
+       runq = p;
 out:
-	splx(s);
+       spinlock_unlock(&sched_lock);
+       splx(s);
 }
 
 /*
@@ -156,10 +163,12 @@ register struct proc *p;
 	setrq(p);
 	if(p->p_pri < curpri)
 		runrun++;
-	if(runout != 0 && (p->p_flag&SLOAD) == 0) {
-		runout = 0;
-		wakeup((caddr_t)&runout);
-	}
+       if(runout != 0 && (p->p_flag&SLOAD) == 0) {
+               spinlock_lock(&sched_lock);
+               runout = 0;
+               wakeup((caddr_t)&runout);
+               spinlock_unlock(&sched_lock);
+       }
 }
 
 /*
@@ -222,11 +231,13 @@ loop:
 	/*
 	 * If there is no one there, wait.
 	 */
-	if (outage == -20000) {
-		runout++;
-		sleep((caddr_t)&runout, PSWP);
-		goto loop;
-	}
+       if (outage == -20000) {
+               spinlock_lock(&sched_lock);
+               runout++;
+               spinlock_unlock(&sched_lock);
+               sleep((caddr_t)&runout, PSWP);
+               goto loop;
+       }
 	spl0();
 
 	/*
@@ -278,10 +289,12 @@ loop:
 		xswap(p, 1, 0);
 		goto loop;
 	}
-	spl6();
-	runin++;
-	sleep((caddr_t)&runin, PSWP);
-	goto loop;
+       spl6();
+       spinlock_lock(&sched_lock);
+       runin++;
+       spinlock_unlock(&sched_lock);
+       sleep((caddr_t)&runin, PSWP);
+       goto loop;
 }
 
 /*
@@ -403,12 +416,14 @@ loop:
 		idle();
 		goto loop;
 	}
-	q = pq;
-	if(q == NULL)
-		runq = p->p_link;
-	else
-		q->p_link = p->p_link;
-	curpri = n;
+       q = pq;
+       spinlock_lock(&sched_lock);
+       if(q == NULL)
+               runq = p->p_link;
+       else
+               q->p_link = p->p_link;
+       spinlock_unlock(&sched_lock);
+       curpri = n;
 	spl0();
 	/*
 	 * The rsav (ssav) contents are interpreted in the new address space

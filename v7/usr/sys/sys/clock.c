@@ -6,6 +6,7 @@
 #include "../h/user.h"
 #include "../h/proc.h"
 #include "../h/reg.h"
+#include "../h/spinlock.h"
 
 #define	SCHMAG	8/10
 
@@ -130,10 +131,12 @@ out:
 			if(pp->p_pri >= PUSER)
 				setpri(pp);
 		}
-		if(runin!=0) {
-			runin = 0;
-			wakeup((caddr_t)&runin);
-		}
+               if(runin!=0) {
+                       spinlock_lock(&sched_lock);
+                       runin = 0;
+                       wakeup((caddr_t)&runin);
+                       spinlock_unlock(&sched_lock);
+               }
 	}
 }
 

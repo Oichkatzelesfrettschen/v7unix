@@ -8,6 +8,7 @@
 #include "../h/inode.h"
 #include "../h/buf.h"
 #include "../h/seg.h"
+#include "../h/spinlock.h"
 
 /*
  * Swap out process p.
@@ -37,10 +38,12 @@ register struct proc *p;
 	p->p_addr = a;
 	p->p_flag &= ~(SLOAD|SLOCK);
 	p->p_time = 0;
-	if(runout) {
-		runout = 0;
-		wakeup((caddr_t)&runout);
-	}
+       if(runout) {
+               spinlock_lock(&sched_lock);
+               runout = 0;
+               wakeup((caddr_t)&runout);
+               spinlock_unlock(&sched_lock);
+       }
 }
 
 /*
