@@ -56,8 +56,10 @@ dpkg-buildpackage
 
 ## Building with CMake
 
-The new build system uses CMake with clang and bison.  CMake exports
-`compile_commands.json` so editors can understand the build.  The build
+The new build system uses CMake with clang.  Bison is optional and is detected
+automatically when present.  When available it is used to regenerate parser
+sources; otherwise the pre-generated files are compiled.
+`compile_commands.json` is exported so editors can understand the build.  The build
 now includes a small target that compiles the historical kernel sources.
 To build all available components, run:
 
@@ -73,6 +75,12 @@ using the helper script:
 ```sh
 ./.codex/setup.sh
 ```
+
+## Meson Build
+
+A minimal Meson build file is also provided. It detects Bison using
+`dependency('bison', required : false)` and conditionally regenerates parser
+sources using a custom target.
 
 ## License
 

@@ -13,7 +13,15 @@ if(CCACHE_PROGRAM)
     set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
 endif()
 
-include(FindBISON)
+find_package(BISON)
+
+if(BISON_FOUND)
+    # Demonstrate the BISON_TARGET() helper by generating a small parser.
+    BISON_TARGET(SampleGrammar
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/sample.y
+        ${CMAKE_CURRENT_BINARY_DIR}/sample.c)
+    add_custom_target(sample_parser DEPENDS ${BISON_SampleGrammar_OUTPUTS})
+endif()
 
 option(SPINLOCK_UNIPROCESSOR "Compile out spinlocks" OFF)
 option(USE_TICKET_LOCK "Use fair ticket locks" OFF)
