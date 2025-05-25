@@ -13,7 +13,13 @@ The kernel spinlock implementation includes an optional fair ticket
 lock.  Define `USE_TICKET_LOCK` when compiling to enable this variant.
 Ticket locks are recommended on multiprocessor machines where fairness
 is desirable; the default lock is faster but can starve under heavy
-contention.
+contention.  Define `SPINLOCK_UNIPROCESSOR` to compile out locking on
+uniprocessor builds or `SPINLOCK_DEBUG` to instrument lock acquire and
+release with timing.
+
+## SVR4 compatibility
+
+A stub module `svr4_machdep.c` is provided for System V Release 4 support. It will translate SVR4 system calls and prepare binaries for execution when fully implemented.
 
 # Source
 
@@ -58,6 +64,7 @@ available components, run:
 cmake -B build -DCMAKE_C_COMPILER=clang
 cmake --build build
 ```
+Optional spinlock features can be toggled with `SPINLOCK_UNIPROCESSOR`, `USE_TICKET_LOCK` and `SPINLOCK_DEBUG` (e.g. `cmake -B build -DSPINLOCK_DEBUG=ON`).
 
 Development dependencies (including `compiledb` and `ccache`) can be installed
 using the helper script:

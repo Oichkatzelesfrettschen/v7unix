@@ -16,4 +16,18 @@ endif()
 
 include(FindBISON)
 
+option(SPINLOCK_UNIPROCESSOR "Compile out spinlocks" OFF)
+option(USE_TICKET_LOCK "Use fair ticket locks" OFF)
+option(SPINLOCK_DEBUG "Instrument spinlocks" OFF)
+
+if(SPINLOCK_UNIPROCESSOR)
+    add_compile_definitions(SPINLOCK_UNIPROCESSOR)
+endif()
+if(USE_TICKET_LOCK)
+    add_compile_definitions(USE_TICKET_LOCK)
+endif()
+if(SPINLOCK_DEBUG)
+    add_compile_definitions(SPINLOCK_DEBUG)
+endif()
+
 add_subdirectory(v7/usr/src/cmd)
