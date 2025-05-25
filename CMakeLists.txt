@@ -31,3 +31,4 @@ if(SPINLOCK_DEBUG)
 endif()
 
 add_subdirectory(v7/usr/src/cmd)
+add_subdirectory(kernel)
