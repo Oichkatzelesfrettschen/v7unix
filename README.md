@@ -7,6 +7,14 @@ contemporary C compilers and system headers.
 
 `ed` and `sed` should work.
 
+## Ticket spinlocks
+
+The kernel spinlock implementation includes an optional fair ticket
+lock.  Define `USE_TICKET_LOCK` when compiling to enable this variant.
+Ticket locks are recommended on multiprocessor machines where fairness
+is desirable; the default lock is faster but can starve under heavy
+contention.
+
 # Source
 
 Unix Version 7 tarbomb from https://minnie.tuhs.org/Archive/Distributions/Research/Henry_Spencer_v7/v7.tar.gz
