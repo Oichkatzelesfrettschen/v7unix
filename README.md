@@ -72,3 +72,7 @@ using the helper script:
 ```sh
 ./.codex/setup.sh
 ```
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
