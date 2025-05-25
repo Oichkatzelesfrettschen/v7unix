@@ -30,7 +30,7 @@ with an extended plan for new subsystems.
 
 ## Phase IV: Inter‑Process Communication
 
-- Build upon the mailbox based IPC documented in `doc/IPC.md`.
+- Build upon the mailbox based IPC documented in `docs/IPC.md`.
 - Add signal management wrappers and FIFO implementations.
 - Create validation tests for mailboxes, signals and FIFO channels.
 
