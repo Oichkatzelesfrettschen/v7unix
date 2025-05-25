@@ -108,8 +108,8 @@ Meson is another supported build system if you prefer its workflow.
 
 Development dependencies can be installed using the helper script.  It pulls in
 build tools such as Clang/LLD, common Python utilities and Node tooling.  The
-script also installs Coq, its standard library and the TLA+ tools for model
-checking:
+script also installs Coq and its standard library, the TLA+ tools for model
+checking and additional theorem proving packages for Agda and Isabelle/HOL:
 
 ```sh
 ./.codex/setup.sh
