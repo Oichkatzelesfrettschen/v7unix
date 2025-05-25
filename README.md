@@ -89,6 +89,21 @@ cmake -G Ninja -B build \
 ninja -C build
 ```
 
+For 32-bit or 16-bit targets you may need to select an alternate
+compiler.  The `Makefile` honours the `CC` environment variable, while
+the CMake build uses `CMAKE_C_COMPILER`.  A typical 32‑bit build
+might look like:
+
+```sh
+CC=i686-elf-gcc cmake -G Ninja -B build \
+  -DCMAKE_C_COMPILER=i686-elf-gcc \
+  -DSPINLOCK_UNIPROCESSOR=ON
+ninja -C build
+```
+
+Depending on the platform, additional userland drivers may need to be
+obtained separately.
+
 Meson is another supported build system if you prefer its workflow.
 
 Development dependencies (including `compiledb` and `ccache`) can be installed
