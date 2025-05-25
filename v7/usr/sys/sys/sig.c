@@ -7,6 +7,7 @@
 #include "../h/reg.h"
 #include "../h/text.h"
 #include "../h/seg.h"
+#include "../h/spinlock.h"
 
 /*
  * Priority for tracing
@@ -23,10 +24,11 @@
  */
 struct
 {
-	int	ip_lock;
-	int	ip_req;
-	int	*ip_addr;
-	int	ip_data;
+        struct spinlock ip_lock; /* protects the rest of the structure */
+        int     ip_pid;         /* pid of traced process */
+        int     ip_req;
+        int     *ip_addr;
+        int     ip_data;
 } ipc;
 
 /*
@@ -288,21 +290,33 @@ ptrace()
 	return;
 
     found:
-	while (ipc.ip_lock)
-		sleep((caddr_t)&ipc, IPCPRI);
-	ipc.ip_lock = p->p_pid;
-	ipc.ip_data = uap->data;
-	ipc.ip_addr = uap->addr;
-	ipc.ip_req = uap->req;
-	p->p_flag &= ~SWTED;
-	setrun(p);
-	while (ipc.ip_req > 0)
-		sleep((caddr_t)&ipc, IPCPRI);
-	u.u_r.r_val1 = ipc.ip_data;
-	if (ipc.ip_req < 0)
-		u.u_error = EIO;
-	ipc.ip_lock = 0;
-	wakeup((caddr_t)&ipc);
+        for (;;) {
+                spinlock_acquire(&ipc.ip_lock);
+                if (ipc.ip_pid == 0)
+                        break;
+                spinlock_release(&ipc.ip_lock);
+                sleep((caddr_t)&ipc, IPCPRI);
+        }
+        ipc.ip_pid = p->p_pid;
+        ipc.ip_data = uap->data;
+        ipc.ip_addr = uap->addr;
+        ipc.ip_req = uap->req;
+        p->p_flag &= ~SWTED;
+        setrun(p);
+        spinlock_release(&ipc.ip_lock);
+        for (;;) {
+                spinlock_acquire(&ipc.ip_lock);
+                if (ipc.ip_req <= 0)
+                        break;
+                spinlock_release(&ipc.ip_lock);
+                sleep((caddr_t)&ipc, IPCPRI);
+        }
+        u.u_r.r_val1 = ipc.ip_data;
+        if (ipc.ip_req < 0)
+                u.u_error = EIO;
+        ipc.ip_pid = 0;
+        spinlock_release(&ipc.ip_lock);
+        wakeup((caddr_t)&ipc);
 }
 
 /*
@@ -312,38 +326,48 @@ ptrace()
  */
 procxmt()
 {
-	register int i;
-	register *p;
-	register struct text *xp;
+        register int i;
+        register *p;
+        register struct text *xp;
 
-	if (ipc.ip_lock != u.u_procp->p_pid)
-		return(0);
-	i = ipc.ip_req;
-	ipc.ip_req = 0;
-	wakeup((caddr_t)&ipc);
+        spinlock_acquire(&ipc.ip_lock);
+        if (ipc.ip_pid != u.u_procp->p_pid) {
+                spinlock_release(&ipc.ip_lock);
+                return(0);
+        }
+        i = ipc.ip_req;
+        ipc.ip_req = 0;
+        wakeup((caddr_t)&ipc);
+        spinlock_release(&ipc.ip_lock);
 	switch (i) {
 
 	/* read user I */
-	case 1:
-		if (fuibyte((caddr_t)ipc.ip_addr) == -1)
-			goto error;
-		ipc.ip_data = fuiword((caddr_t)ipc.ip_addr);
-		break;
+        case 1:
+                if (fuibyte((caddr_t)ipc.ip_addr) == -1)
+                        goto error;
+                spinlock_acquire(&ipc.ip_lock);
+                ipc.ip_data = fuiword((caddr_t)ipc.ip_addr);
+                spinlock_release(&ipc.ip_lock);
+                break;
 
 	/* read user D */
-	case 2:
-		if (fubyte((caddr_t)ipc.ip_addr) == -1)
-			goto error;
-		ipc.ip_data = fuword((caddr_t)ipc.ip_addr);
-		break;
+        case 2:
+                if (fubyte((caddr_t)ipc.ip_addr) == -1)
+                        goto error;
+                spinlock_acquire(&ipc.ip_lock);
+                ipc.ip_data = fuword((caddr_t)ipc.ip_addr);
+                spinlock_release(&ipc.ip_lock);
+                break;
 
 	/* read u */
-	case 3:
-		i = (int)ipc.ip_addr;
-		if (i<0 || i >= ctob(USIZE))
-			goto error;
-		ipc.ip_data = ((physadr)&u)->r[i>>1];
-		break;
+        case 3:
+                i = (int)ipc.ip_addr;
+                if (i<0 || i >= ctob(USIZE))
+                        goto error;
+                spinlock_acquire(&ipc.ip_lock);
+                ipc.ip_data = ((physadr)&u)->r[i>>1];
+                spinlock_release(&ipc.ip_lock);
+                break;
 
 	/* write user I */
 	/* Must set up to allow writing */
@@ -383,14 +407,18 @@ procxmt()
 			if (p == &u.u_ar0[regloc[i]])
 				goto ok;
 		if (p == &u.u_ar0[RPS]) {
-			ipc.ip_data |= 0170000;	/* assure user space */
-			ipc.ip_data &= ~0340;	/* priority 0 */
-			goto ok;
+                        spinlock_acquire(&ipc.ip_lock);
+                        ipc.ip_data |= 0170000; /* assure user space */
+                        ipc.ip_data &= ~0340;   /* priority 0 */
+                        spinlock_release(&ipc.ip_lock);
+                        goto ok;
 		}
 		goto error;
 
 	ok:
-		*p = ipc.ip_data;
+                spinlock_acquire(&ipc.ip_lock);
+                *p = ipc.ip_data;
+                spinlock_release(&ipc.ip_lock);
 		break;
 
 	/* set signal and continue */
@@ -409,9 +437,11 @@ procxmt()
 	case 8:
 		exit(fsig(u.u_procp));
 
-	default:
-	error:
-		ipc.ip_req = -1;
-	}
-	return(0);
+        default:
+        error:
+                spinlock_acquire(&ipc.ip_lock);
+                ipc.ip_req = -1;
+                spinlock_release(&ipc.ip_lock);
+        }
+        return(0);
 }
