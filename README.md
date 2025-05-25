@@ -21,6 +21,12 @@ release with timing.
 
 A stub module `svr4_machdep.c` is provided for System V Release 4 support. It will translate SVR4 system calls and prepare binaries for execution when fully implemented.
 
+## IPC
+
+The experimental IPC layer uses mailboxes to exchange messages between
+processes.  See [doc/IPC.md](doc/IPC.md) for an overview of the mailbox
+layout, send/receive semantics and timeout behaviour.
+
 # Source
 
 Unix Version 7 tarbomb from https://minnie.tuhs.org/Archive/Distributions/Research/Henry_Spencer_v7/v7.tar.gz
