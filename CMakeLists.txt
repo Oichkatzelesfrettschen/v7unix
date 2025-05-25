@@ -31,4 +31,4 @@ endif()
 
 add_subdirectory(v7/usr/src/cmd)
 add_subdirectory(kernel)
-add_subdirectory(src-user)
+add_subdirectory(src/user)

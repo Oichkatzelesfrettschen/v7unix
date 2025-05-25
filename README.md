@@ -29,7 +29,7 @@ A stub module `svr4_machdep.c` is provided for System V Release 4 support. It wi
 ## IPC
 
 The experimental IPC layer uses mailboxes to exchange messages between
-processes.  See [doc/IPC.md](doc/IPC.md) for an overview of the mailbox
+processes.  See [docs/IPC.md](docs/IPC.md) for an overview of the mailbox
 layout, send/receive semantics and timeout behaviour.
 
 # Source
