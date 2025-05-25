@@ -1,0 +1,3 @@
+tests/spinlock_threads
+tests/spinlock_processes
+tests/ipc_trace_concurrent
