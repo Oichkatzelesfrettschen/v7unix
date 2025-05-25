@@ -1,0 +1,14 @@
+name: TLA+ Model Check
+on: [push, pull_request]
+
+jobs:
+  tlc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Java
+        run: sudo apt-get update && sudo apt-get install -y openjdk-17-jre-headless curl
+      - name: Download TLA+ Tools
+        run: curl -L -o tla2tools.jar https://github.com/tlaplus/tlaplus/releases/latest/download/tla2tools.jar
+      - name: Run TLC
+        run: java -jar tla2tools.jar TicketLock.tla -config TicketLock.cfg
