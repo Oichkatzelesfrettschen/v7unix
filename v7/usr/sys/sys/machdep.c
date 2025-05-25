@@ -9,6 +9,7 @@
 #include "../h/map.h"
 #include "../h/reg.h"
 #include "../h/buf.h"
+#include "../h/spinlock.h"
 
 /*
  * Icode is the octal bootstrap
@@ -162,6 +163,7 @@ caddr_t p;
  */
 int	maplock;
 
+spinlock_t map_spin;
 mapalloc(bp)
 register struct buf *bp;
 {
@@ -169,14 +171,28 @@ register struct buf *bp;
 
 	if(cputype != 70)
 		return;
-	spl6();
-	while(maplock&B_BUSY) {
-		maplock |= B_WANTED;
-		sleep((caddr_t)&maplock, PSWP+1);
-	}
-	maplock |= B_BUSY;
-	spl0();
-	bp->b_flags |= B_MAP;
+#ifdef SPINLOCK_UNIPROCESSOR
+        spl6();
+        while(maplock&B_BUSY) {
+                maplock |= B_WANTED;
+                sleep((caddr_t)&maplock, PSWP+1);
+        }
+        maplock |= B_BUSY;
+        spl0();
+#else
+        for(;;) {
+                spinlock_lock(&map_spin);
+                if((maplock&B_BUSY) == 0) {
+                        maplock |= B_BUSY;
+                        spinlock_unlock(&map_spin);
+                        break;
+                }
+                maplock |= B_WANTED;
+                spinlock_unlock(&map_spin);
+                sleep((caddr_t)&maplock, PSWP+1);
+        }
+#endif
+        bp->b_flags |= B_MAP;
 	a = bp->b_xmem;
 	for(i=16; i<32; i+=2)
 		UBMAP->r[i+1] = a;
@@ -189,8 +205,16 @@ mapfree(bp)
 struct buf *bp;
 {
 
-	bp->b_flags &= ~B_MAP;
-	if(maplock&B_WANTED)
-		wakeup((caddr_t)&maplock);
-	maplock = 0;
+        bp->b_flags &= ~B_MAP;
+#ifdef SPINLOCK_UNIPROCESSOR
+        if(maplock&B_WANTED)
+                wakeup((caddr_t)&maplock);
+        maplock = 0;
+#else
+        spinlock_lock(&map_spin);
+        if(maplock&B_WANTED)
+                wakeup((caddr_t)&maplock);
+        maplock = 0;
+        spinlock_unlock(&map_spin);
+#endif
 }
