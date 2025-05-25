@@ -9,11 +9,13 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang bison flex clang-tidy cmake make python3-pip
-          pip3 install pre-commit
+          sudo apt-get install -y clang bison flex clang-tidy cmake make python3-pip ccache
+          pip3 install pre-commit compiledb
       - name: Configure
         run: cmake -B build -DCMAKE_C_COMPILER=clang
       - name: Build
         run: cmake --build build
+      - name: Generate compile database
+        run: compiledb -n cmake --build build
       - name: Lint YAML
         run: pre-commit run --files .github/workflows/ci.yml
