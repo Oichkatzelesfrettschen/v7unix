@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 # Core development tools
 APT_PKGS=(
@@ -13,6 +14,8 @@ APT_PKGS=(
     git jq
     nodejs npm
     coq coq-theories coq-doc
+    agda agda-mode agda-stdlib
+    isabelle
 )
 # Install packages useful for TLA+ if available
 APT_PKGS+=(tlaplus tla-tools)
@@ -21,6 +24,9 @@ for pkg in "${APT_PKGS[@]}"; do
         echo "Warning: failed to install $pkg via apt" >&2
     fi
 done
+sudo apt-get clean
+sudo apt-get autoremove -y
+git submodule update --init --recursive || echo "Warning: failed to init submodules" >&2
 
 PIP_PKGS=(
     pre-commit compiledb
@@ -32,6 +38,9 @@ for pkg in "${PIP_PKGS[@]}"; do
         echo "Warning: failed to install $pkg via pip" >&2
     fi
 done
+if command -v pre-commit >/dev/null 2>&1; then
+    pre-commit install --install-hooks || echo "Warning: pre-commit install failed" >&2
+fi
 
 # Useful global npm packages
 NPM_PKGS=(eslint)
@@ -40,6 +49,7 @@ for pkg in "${NPM_PKGS[@]}"; do
         echo "Warning: failed to install $pkg via npm" >&2
     fi
 done
+sudo npm cache clean --force >/dev/null 2>&1 || true
 
 # Configure default compilation flags for performance builds
 cat <<'EOF' >> "$HOME/.codex_env"
