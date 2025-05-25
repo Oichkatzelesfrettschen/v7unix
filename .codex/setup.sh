@@ -8,9 +8,18 @@ for pkg in "${APT_PKGS[@]}"; do
     fi
 done
 
-PIP_PKGS=(pre-commit compiledb bison)
+PIP_PKGS=(pre-commit compiledb configuredb bison)
 for pkg in "${PIP_PKGS[@]}"; do
     if ! pip3 install --break-system-packages "$pkg"; then
         echo "Warning: failed to install $pkg via pip" >&2
     fi
 done
+
+# Configure tools after installation
+if command -v pre-commit >/dev/null 2>&1; then
+    pre-commit install
+fi
+
+if command -v configuredb >/dev/null 2>&1; then
+    configuredb
+fi

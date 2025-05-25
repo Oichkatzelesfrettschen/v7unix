@@ -10,7 +10,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang bison flex clang-tidy cmake make python3-pip ccache
-          pip3 install pre-commit compiledb
+          pip3 install pre-commit compiledb configuredb
+          pre-commit install
+          configuredb
       - name: Configure
         run: cmake -B build -DCMAKE_C_COMPILER=clang
       - name: Build

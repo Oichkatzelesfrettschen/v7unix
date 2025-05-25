@@ -67,9 +67,14 @@ cmake --build build
 ```
 Optional spinlock features can be toggled with `SPINLOCK_UNIPROCESSOR`, `USE_TICKET_LOCK` and `SPINLOCK_DEBUG` (e.g. `cmake -B build -DSPINLOCK_DEBUG=ON`).
 
-Development dependencies (including `compiledb` and `ccache`) can be installed
-using the helper script:
+Development dependencies (including `pre-commit`, `compiledb`, `configuredb`
+and `ccache`) can be installed using the helper script:
 
 ```sh
 ./.codex/setup.sh
+```
+After running the script, Git hooks can be enabled with:
+
+```sh
+pre-commit install
 ```
