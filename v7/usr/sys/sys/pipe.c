@@ -5,6 +5,7 @@
 #include "../h/inode.h"
 #include "../h/file.h"
 #include "../h/reg.h"
+#include "../h/spinlock.h"
 
 /*
  * Max allowable buffering per pipe.
@@ -15,6 +16,9 @@
  * files, which is probably not good.
  */
 #define	PIPSIZ	4096
+/* Spinlock guarding inode flag updates */
+spinlock_t ilock_spin;
+
 
 /*
  * The sys-pipe entry.
@@ -190,11 +194,17 @@ plock(ip)
 register struct inode *ip;
 {
 
-	while(ip->i_flag&ILOCK) {
-		ip->i_flag |= IWANT;
-		sleep((caddr_t)ip, PINOD);
-	}
-	ip->i_flag |= ILOCK;
+        for(;;) {
+                spinlock_lock(&ilock_spin);
+                if((ip->i_flag&ILOCK) == 0) {
+                        ip->i_flag |= ILOCK;
+                        spinlock_unlock(&ilock_spin);
+                        break;
+                }
+                ip->i_flag |= IWANT;
+                spinlock_unlock(&ilock_spin);
+                sleep((caddr_t)ip, PINOD);
+        }
 }
 
 /*
@@ -208,9 +218,11 @@ prele(ip)
 register struct inode *ip;
 {
 
-	ip->i_flag &= ~ILOCK;
-	if(ip->i_flag&IWANT) {
-		ip->i_flag &= ~IWANT;
-		wakeup((caddr_t)ip);
-	}
+        spinlock_lock(&ilock_spin);
+        ip->i_flag &= ~ILOCK;
+        if(ip->i_flag&IWANT) {
+                ip->i_flag &= ~IWANT;
+                wakeup((caddr_t)ip);
+        }
+        spinlock_unlock(&ilock_spin);
 }

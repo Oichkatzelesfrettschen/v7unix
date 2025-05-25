@@ -8,6 +8,9 @@
 #include "../h/filsys.h"
 #include "../h/conf.h"
 #include "../h/buf.h"
+#include "../h/spinlock.h"
+
+extern spinlock_t ilock_spin;
 
 /*
  * Look up an inode by device,inumber.
@@ -40,25 +43,29 @@ ino_t ino;
 loop:
 	oip = NULL;
 	for(ip = &inode[0]; ip < &inode[NINODE]; ip++) {
-		if(ino == ip->i_number && dev == ip->i_dev) {
-			if((ip->i_flag&ILOCK) != 0) {
-				ip->i_flag |= IWANT;
-				sleep((caddr_t)ip, PINOD);
-				goto loop;
-			}
-			if((ip->i_flag&IMOUNT) != 0) {
-				for(mp = &mount[0]; mp < &mount[NMOUNT]; mp++)
-				if(mp->m_inodp == ip) {
-					dev = mp->m_dev;
-					ino = ROOTINO;
-					goto loop;
-				}
-				panic("no imt");
-			}
-			ip->i_count++;
-			ip->i_flag |= ILOCK;
-			return(ip);
-		}
+                if(ino == ip->i_number && dev == ip->i_dev) {
+                        spinlock_lock(&ilock_spin);
+                        if((ip->i_flag&ILOCK) != 0) {
+                                ip->i_flag |= IWANT;
+                                spinlock_unlock(&ilock_spin);
+                                sleep((caddr_t)ip, PINOD);
+                                goto loop;
+                        }
+                        if((ip->i_flag&IMOUNT) != 0) {
+                                spinlock_unlock(&ilock_spin);
+                                for(mp = &mount[0]; mp < &mount[NMOUNT]; mp++)
+                                if(mp->m_inodp == ip) {
+                                        dev = mp->m_dev;
+                                        ino = ROOTINO;
+                                        goto loop;
+                                }
+                                panic("no imt");
+                        }
+                        ip->i_count++;
+                        ip->i_flag |= ILOCK;
+                        spinlock_unlock(&ilock_spin);
+                        return(ip);
+                }
 		if(oip==NULL && ip->i_count==0)
 			oip = ip;
 	}
@@ -68,10 +75,12 @@ loop:
 		u.u_error = ENFILE;
 		return(NULL);
 	}
-	ip->i_dev = dev;
-	ip->i_number = ino;
-	ip->i_flag = ILOCK;
-	ip->i_count++;
+        ip->i_dev = dev;
+        ip->i_number = ino;
+        spinlock_lock(&ilock_spin);
+        ip->i_flag = ILOCK;
+        ip->i_count++;
+        spinlock_unlock(&ilock_spin);
 	ip->i_un.i_lastr = 0;
 	bp = bread(dev, itod(ino));
 	/*
@@ -123,11 +132,13 @@ iput(ip)
 register struct inode *ip;
 {
 
-	if(ip->i_count == 1) {
-		ip->i_flag |= ILOCK;
-		if(ip->i_nlink <= 0) {
-			itrunc(ip);
-			ip->i_mode = 0;
+        if(ip->i_count == 1) {
+                spinlock_lock(&ilock_spin);
+                ip->i_flag |= ILOCK;
+                spinlock_unlock(&ilock_spin);
+                if(ip->i_nlink <= 0) {
+                        itrunc(ip);
+                        ip->i_mode = 0;
 			ip->i_flag |= IUPD|ICHG;
 			ifree(ip->i_dev, ip->i_number);
 		}
