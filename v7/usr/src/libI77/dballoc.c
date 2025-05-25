@@ -2,6 +2,7 @@
 #ifndef debug
 #define ASSERT(p)
 #endif
+#include <stdint.h>
 #ifdef debug
 #define ASSERT(p) if(!(p))botch("p");else
 botch(s)
@@ -28,9 +29,9 @@ char *s;
 #define BLOCK 1024
 #define BUSY 1
 #define NULL 0
-#define testbusy(p) ((int)(p)&BUSY)
-#define setbusy(p) (struct store *)((int)(p)+BUSY)
-#define clearbusy(p) (struct store *)((int)(p)&~BUSY)
+#define testbusy(p) ((uintptr_t)(p)&BUSY)
+#define setbusy(p) (struct store *)((uintptr_t)(p)+BUSY)
+#define clearbusy(p) (struct store *)((uintptr_t)(p)&~BUSY)
 
 struct store { struct store *ptr; };
 
@@ -81,8 +82,8 @@ unsigned nbytes;
 		}
 		temp = (nw+BLOCK/WORD)&~(BLOCK/WORD-1);
 		q = sbrk(temp*WORD); /*SYSDEP*/
-		if((int)q == -1)
-			return(NULL);
+                if((uintptr_t)q == (uintptr_t)-1)
+                        return(NULL);
 		ASSERT(q>alloct);
 		alloct->ptr = q;
 		if(q!=alloct+1)

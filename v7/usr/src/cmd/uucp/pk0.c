@@ -4,6 +4,7 @@
 #include <sys/param.h>
 #include <sys/pk.h>
 #include <sys/buf.h>
+#include <string.h>
 
 /*
  * packet driver
@@ -639,8 +640,7 @@ pkzero(s,n)
 register char *s;
 register n;
 {
-	while (n--)
-		*s++ = 0;
+        memset(s, 0, n);
 }
 
 pksize(n)

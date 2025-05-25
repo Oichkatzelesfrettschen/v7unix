@@ -2,4 +2,5 @@ BISON_TARGET(MakeParser gram.y ${CMAKE_CURRENT_BINARY_DIR}/gram.c COMPILE_FLAGS 
 add_executable(make
     ident.c doname.c misc.c files.c dosys.c main.c ${BISON_MakeParser_OUTPUTS}
 )
+target_compile_options(make PRIVATE -Wall -Werror)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

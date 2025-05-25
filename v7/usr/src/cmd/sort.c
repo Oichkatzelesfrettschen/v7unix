@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -237,7 +238,7 @@ char **argv;
 
 	ep = end + MEM;
 	lspace = (int *)sbrk(0);
-	while((int)brk(ep) == -1)
+	while((uintptr_t)brk(ep) == -1)
 		ep -= 512;
 	brk(ep -= 512);	/* for recursion */
 	a = ep - (char*)lspace;

@@ -3,6 +3,7 @@
 #include "../h/inode.h"
 #include "../h/dir.h"
 #include "../h/user.h"
+#include <stdint.h>
 #include "../h/buf.h"
 #include "../h/conf.h"
 
@@ -180,8 +181,8 @@ register n;
 		return;
 	if(u.u_segflg != 1 &&
 	  (n&(NBPW-1)) == 0 &&
-	  ((int)cp&(NBPW-1)) == 0 &&
-	  ((int)u.u_base&(NBPW-1)) == 0) {
+          ((uintptr_t)cp&(NBPW-1)) == 0 &&
+          ((uintptr_t)u.u_base&(NBPW-1)) == 0) {
 		if (flag==B_WRITE)
 			if (u.u_segflg==0)
 				t = copyin(u.u_base, (caddr_t)cp, n);

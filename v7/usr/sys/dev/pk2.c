@@ -1,5 +1,6 @@
 #define	KERNEL	1
 #include "../h/pk.p"
+#include <stdint.h>
 
 /*
  * input framing and block checking.

@@ -2,9 +2,10 @@
 botch(s)
 char *s;
 {
-	printf("assertion botched: %s\n",s);
-	abort();
+        printf("assertion botched: %s\n",s);
+        abort();
 }
+#include <stdint.h>
 /*	C storage allocator
  *	circular first-fit strategy
  *	works with noncontiguous, but monotonically linked, arena
@@ -22,9 +23,9 @@ char *s;
 #define BLOCK 1024
 #define BUSY 1
 #define NULL 0
-#define testbusy(p) ((int)(p)&BUSY)
-#define setbusy(p) ((int)(p)+BUSY)
-#define clearbusy(p) ((int)(p)&~BUSY)
+#define testbusy(p) ((uintptr_t)(p)&BUSY)
+#define setbusy(p) ((uintptr_t)(p)+BUSY)
+#define clearbusy(p) ((uintptr_t)(p)&~BUSY)
 
 struct store { struct store *ptr; };
 
@@ -72,8 +73,8 @@ unsigned nbytes;
 		if(q+temp < q)
 			return(NULL);
 		q = sbrk(temp*WORD);
-		if((int)q == -1)
-			return(NULL);
+                if((uintptr_t)q == (uintptr_t)-1)
+                        return(NULL);
 		ASSERT(q>alloct);
 		alloct->ptr = q;
 		if(q!=alloct+1)
@@ -102,7 +103,8 @@ register struct store *p;
 	p->ptr = clearbusy(p->ptr);
 	ASSERT(p->ptr > allocp && p->ptr <= alloct);
 }
-
+                                       clearbusy(p->ptr) - p - 2 );
+
 struct { unsigned tag:4, vtype:4;};
 
 prbusy()

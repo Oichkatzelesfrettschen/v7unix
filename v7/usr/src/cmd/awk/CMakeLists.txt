@@ -12,5 +12,6 @@ add_executable(awk
     ${FLEX_AwkLexer_OUTPUTS}
     b.c lib.c main.c parse.c proc.c run.c token.c tran.c
 )
+target_compile_options(awk PRIVATE -Wall -Werror)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

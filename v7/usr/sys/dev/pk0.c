@@ -1,5 +1,6 @@
 #define	KERNEL	1
 #include "../h/pk.p"
+#include <string.h>
 
 /*
  * packet driver
@@ -668,8 +669,7 @@ pkzero(s,n)
 register char *s;
 register n;
 {
-	while (n--)
-		*s++ = 0;
+        memset(s, 0, n);
 }
 
 pksize(n)

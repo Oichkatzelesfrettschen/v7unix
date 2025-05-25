@@ -6,4 +6,5 @@ add_executable(eqn
     font.c glob.c integral.c lookup.c mark.c matrix.c over.c paren.c
     shift.c size.c text.c fromto.c ${BISON_EqnParser_OUTPUTS}
 )
+target_compile_options(eqn PRIVATE -Wall -Werror)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

@@ -3,6 +3,7 @@
 #include "../h/systm.h"
 #include "../h/conf.h"
 #include "../h/buf.h"
+#include <stdint.h>
 
 struct cblock {
 	struct cblock *c_next;
@@ -31,12 +32,12 @@ register struct clist *p;
 		c = *p->c_cf++ & 0377;
 		if (--p->c_cc<=0) {
 			bp = (struct cblock *)(p->c_cf-1);
-			bp = (struct cblock *) ((int)bp & ~CROUND);
+			bp = (struct cblock *) ((uintptr_t)bp & ~CROUND);
 			p->c_cf = NULL;
 			p->c_cl = NULL;
 			bp->c_next = cfreelist;
 			cfreelist = bp;
-		} else if (((int)p->c_cf & CROUND) == 0){
+		} else if (((uintptr_t)p->c_cf & CROUND) == 0){
 			bp = (struct cblock *)(p->c_cf);
 			bp--;
 			p->c_cf = bp->c_next->c_info;
@@ -75,13 +76,13 @@ register char *cp;
 		*cp++ = *q->c_cf++;
 		if (--q->c_cc <= 0) {
 			bp = (struct cblock *)(q->c_cf-1);
-			bp = (struct cblock *)((int)bp & ~CROUND);
+			bp = (struct cblock *)((uintptr_t)bp & ~CROUND);
 			q->c_cf = q->c_cl = NULL;
 			bp->c_next = cfreelist;
 			cfreelist = bp;
 			break;
 		}
-		if (((int)q->c_cf & CROUND) == 0) {
+		if (((uintptr_t)q->c_cf & CROUND) == 0) {
 			bp = (struct cblock *)(q->c_cf);
 			bp--;
 			q->c_cf = bp->c_next->c_info;
@@ -110,8 +111,8 @@ int s;
 		cc = -q->c_cc;
 		goto out;
 	}
-	cc = ((int)q->c_cf + CBSIZE) & ~CROUND;
-	cc -= (int)q->c_cf;
+	cc = ((uintptr_t)q->c_cf + CBSIZE) & ~CROUND;
+	cc -= (uintptr_t)q->c_cf;
 	if (q->c_cc < cc)
 		cc = q->c_cc;
 	if (flag) {
@@ -122,8 +123,8 @@ int s;
 		end += cc;
 		while (p < end) {
 			if (*p & flag) {
-				cc = (int)p;
-				cc -= (int)q->c_cf;
+				cc = (uintptr_t)p;
+				cc -= (uintptr_t)q->c_cf;
 				break;
 			}
 			p++;
@@ -165,7 +166,7 @@ register s;
 	}
 	q->c_cc -= cc;
 	q->c_cf += cc;
-	if (((int)q->c_cf & CROUND) == 0) {
+	if (((uintptr_t)q->c_cf & CROUND) == 0) {
 		register struct cblock *bp;
 
 		bp = (struct cblock *)(q->c_cf) -1;
@@ -179,7 +180,7 @@ register s;
 	} else
 	if (q->c_cc == 0) {
 		register struct cblock *bp;
-		q->c_cf = (char *)((int)q->c_cf & ~CROUND);
+		q->c_cf = (char *)((uintptr_t)q->c_cf & ~CROUND);
 		bp = (struct cblock *)(q->c_cf);
 		bp->c_next = cfreelist;
 		cfreelist = bp;
@@ -204,7 +205,7 @@ register struct clist *p;
 		cfreelist = bp->c_next;
 		bp->c_next = NULL;
 		p->c_cf = cp = bp->c_info;
-	} else if (((int)cp & CROUND) == 0) {
+	} else if (((uintptr_t)cp & CROUND) == 0) {
 		bp = (struct cblock *)cp - 1;
 		if ((bp->c_next = cfreelist) == NULL) {
 			splx(s);
@@ -252,7 +253,7 @@ register int cc;
 	}
 
 	while (cc) {
-		if (((int)cq & CROUND) == 0) {
+		if (((uintptr_t)cq & CROUND) == 0) {
 			bp = (struct cblock *) cq - 1;
 			if ((bp->c_next = cfreelist) == NULL) 
 				goto out;
@@ -281,7 +282,7 @@ cinit()
 	register struct cblock *cp;
 	register struct cdevsw *cdp;
 
-	ccp = (int)cfree;
+	ccp = (uintptr_t)cfree;
 	ccp = (ccp+CROUND) & ~CROUND;
 	for(cp=(struct cblock *)ccp; cp <= &cfree[NCLIST-1]; cp++) {
 		cp->c_next = cfreelist;

@@ -23,18 +23,8 @@ inode(a) char *a;
 #define INTBOUND sizeof(int)-1
 #define register 
 mvgbt(n,len,a,b) char *a,*b;
-{	register int num=n*len;
-	if( ((int)a&INTBOUND)==0 && ((int)b&INTBOUND)==0 && (num&INTBOUND)==0 )
-	{	register int *x=(int *)a,*y=(int *)b;
-		num /= sizeof(int);
-		if(x>y) for(;num>0;num--) *y++= *x++;
-		else for(num--;num>=0;num--) *(y+num)= *(x+num);
-	}
-	else
-	{	register char *x=a,*y=b;
-		if(x>y) for(;num>0;num--) *y++= *x++;
-		else for(num--;num>=0;num--) *(y+num)= *(x+num);
-	}
+{
+    memmove(b, a, n*len);
 }
 char *curdir()
 {	char name[256],*bufpos = name;

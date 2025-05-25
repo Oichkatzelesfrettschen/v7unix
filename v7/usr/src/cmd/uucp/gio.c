@@ -1,6 +1,7 @@
 #define USER 1
 #include <sys/pk.p>
 #include <sys/param.h>
+#include <stdint.h>
 #include <sys/pk.h>
 #include <sys/buf.h>
 #include <setjmp.h>
@@ -33,7 +34,7 @@ gturnon()
 		if (Debug > 4)
 			pkdebug = 1;
 		Pk = pkopen(Ifn, Ofn);
-		if ((int) Pk == NULL)
+		if ((uintptr_t)Pk == (uintptr_t)NULL)
 			return(FAIL);
 	}
 	return(0);

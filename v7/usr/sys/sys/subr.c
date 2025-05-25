@@ -5,6 +5,7 @@
 #include "../h/dir.h"
 #include "../h/user.h"
 #include "../h/buf.h"
+#include <string.h>
 
 /*
  * Bmap defines the structure of file system storage
@@ -194,11 +195,5 @@ bcopy(from, to, count)
 caddr_t from, to;
 register count;
 {
-	register char *f, *t;
-
-	f = from;
-	t = to;
-	do
-		*t++ = *f++;
-	while(--count);
+        memcpy(to, from, count);
 }

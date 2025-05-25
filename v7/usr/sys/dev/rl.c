@@ -8,6 +8,7 @@
 #include "../h/dir.h"
 #include "../h/user.h"
 #include "../h/systm.h"
+#include <stdint.h>
 
 #define NRLBLK 10240
 #define RLCYLSZ 10240
@@ -94,7 +95,7 @@ rlstart()
 	rl.sn = (bp->b_blkno%20) << 1;
 	rl.bleft = bp->b_bcount;
 	rl.addr.w[0] = bp->b_xmem & 3;
-	rl.addr.w[1] = (int)bp->b_un.b_addr;
+        rl.addr.w[1] = (uintptr_t)bp->b_un.b_addr;
 	rl.com = (rl.dn << 8) | IENABLE;
 	if (bp->b_flags & B_READ)
 		rl.com |= RCOM;

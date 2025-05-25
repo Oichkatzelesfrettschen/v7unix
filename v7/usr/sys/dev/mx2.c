@@ -3,6 +3,7 @@
 #include "../h/dir.h"
 #include "../h/user.h"
 #include "../h/proc.h"
+#include <string.h>
 #include "../h/tty.h"
 #include "../h/inode.h"
 #define	KERNEL	1
@@ -201,8 +202,7 @@ zero(s, cc)
 register char *s;
 register cc;
 {
-	while (cc--)
-		*s++ = 0;
+        memset(s, 0, cc);
 }
 
 char	m_eot[] ={ M_EOT, 0, 0, 0};

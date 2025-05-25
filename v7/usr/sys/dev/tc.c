@@ -9,6 +9,7 @@
 #include "../h/buf.h"
 #include "../h/dir.h"
 #include "../h/user.h"
+#include <stdint.h>
 
 struct device {
 	int	tccsr;
@@ -158,7 +159,7 @@ tcintr()
 			goto setback;
 		if (*tcdtp < bp->b_blkno)
 			goto setforw;
-		*--tcdtp = (int)bp->b_un.b_addr;	/* core address */
+		*--tcdtp = (uintptr_t)bp->b_un.b_addr;	/* core address */
 		*--tcdtp = -(bp->b_bcount>>1);
 		tccmp->b[0] = ((bp->b_xmem & 03) << 4) | IENABLE|GO
 		    | (bp->b_flags&B_READ?RDATA:WDATA);
