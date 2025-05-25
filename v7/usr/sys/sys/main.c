@@ -41,6 +41,8 @@ main()
 	proc[0].p_flag |= SLOAD|SSYS;
 	proc[0].p_nice = NZERO;
 	u.u_procp = &proc[0];
+        proc[0].p_mailbox = &proc_mailboxes[0];
+        mailbox_init(proc[0].p_mailbox);
 	u.u_cmask = CMASK;
 
 	/*
