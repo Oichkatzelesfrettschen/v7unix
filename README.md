@@ -106,8 +106,10 @@ obtained separately.
 
 Meson is another supported build system if you prefer its workflow.
 
-Development dependencies (including `compiledb` and `ccache`) can be installed
-using the helper script:
+Development dependencies can be installed using the helper script.  It pulls in
+build tools such as Clang/LLD, common Python utilities and Node tooling.  The
+script also installs Coq, its standard library and the TLA+ tools for model
+checking:
 
 ```sh
 ./.codex/setup.sh
