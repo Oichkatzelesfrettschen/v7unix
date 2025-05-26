@@ -4,6 +4,15 @@ set -euo pipefail
 # Enable shell debugging
 set -x
 
+# This script should run with root privileges. Abort early if not.
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root." >&2
+    exit 1
+fi
+
+# Basic failure trap to remind the user to inspect the log on errors.
+trap 'echo "Setup failed. Check $LOG_FILE for details." >&2' ERR
+
 # Log everything to a file for later inspection.  Review this log if any
 # installation step fails and rerun the offending commands after fixing
 # networking or package issues.
@@ -46,6 +55,21 @@ install_package() {
             fi
         fi
     fi
+}
+
+# After the initial run, attempt to reinstall packages that failed.
+troubleshoot_failed_packages() {
+    if [ ${#FAILED_PKGS[@]} -eq 0 ]; then
+        return
+    fi
+    echo "Retrying failed packages: ${FAILED_PKGS[*]}" >&2
+    local remaining=()
+    for pkg in "${FAILED_PKGS[@]}"; do
+        if ! install_package "$pkg"; then
+            remaining+=("$pkg")
+        fi
+    done
+    FAILED_PKGS=("${remaining[@]}")
 }
 
 APT_PKGS=(
@@ -98,6 +122,8 @@ for pkg in "${NPM_PKGS[@]}"; do
 done
 sudo npm cache clean --force >/dev/null 2>&1 || true
 
+troubleshoot_failed_packages
+
 # Optional third-party tools
 EXTRA_URLS=(
     "https://github.com/capnproto/capnproto/archive/refs/tags/v0.10.1.tar.gz"
@@ -112,12 +138,14 @@ done
 # Report any packages that failed so manual troubleshooting can occur
 if [ ${#FAILED_PKGS[@]} -ne 0 ]; then
     echo "The following packages failed to install: ${FAILED_PKGS[*]}" >&2
-    echo "Check $LOG_FILE for details and resolve the issues manually." >&2
+    echo "Check $LOG_FILE for details and run this script again after resolving the issues." >&2
 fi
 
 # Troubleshooting Tips:
 #   * Verify network connectivity if downloads fail.
 #   * Run 'sudo dpkg --configure -a' && 'sudo apt-get -f install' for broken packages.
 #   * Review "$LOG_FILE" to identify failing commands and rerun them after fixing the underlying issue.
+#   * Re-run this script until no packages fail to install.
+#   * Manually install any packages that still fail or adjust the package lists above.
 
 echo "Setup complete"
