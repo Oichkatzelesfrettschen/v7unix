@@ -1,5 +1,12 @@
 #!/bin/bash
-set -e
+# Enable strict error handling and verbose logging
+set -euo pipefail
+set -x
+
+# Log everything to a file for later inspection
+LOG_FILE="${LOG_FILE:-setup.log}"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update && sudo apt-get dist-upgrade -y
@@ -14,6 +21,7 @@ APT_PKGS=(
     python3-pip python3-venv
     git jq
     nodejs npm
+    shellcheck cppcheck graphviz doxygen libpolly-dev capnproto wget curl
     coq coq-theories coq-doc
     agda agda-mode agda-stdlib
     isabelle
@@ -39,6 +47,7 @@ PIP_PKGS=(
     pre-commit compiledb
     pylint mypy flake8
     pytest pytest-cov hypothesis lit yamllint
+    sphinx pygraphviz pydot
 )
 for pkg in "${PIP_PKGS[@]}"; do
     if ! pip3 install --break-system-packages "$pkg"; then
@@ -50,7 +59,7 @@ if command -v pre-commit >/dev/null 2>&1; then
     pre-commit install --install-hooks || echo "Warning: pre-commit install failed" >&2
 fi
 
-NPM_PKGS=(eslint)
+NPM_PKGS=(eslint graphviz-cli)
 for pkg in "${NPM_PKGS[@]}"; do
     if ! sudo npm install -g "$pkg"; then
         echo "Warning: failed to install $pkg via npm" >&2
