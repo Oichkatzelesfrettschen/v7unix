@@ -1,5 +1,15 @@
 #!/bin/bash
 set -e
+
+# Delegate to the top-level setup script if it exists. This allows the
+# repository to maintain a single source of truth for environment setup
+# steps while ensuring Codex automatically executes it during image
+# preparation.
+TOP_LEVEL="$(dirname "$0")/../setup.sh"
+if [ -f "$TOP_LEVEL" ]; then
+    exec "$TOP_LEVEL"
+fi
+
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 # Core development tools
