@@ -1,15 +1,37 @@
 #!/bin/bash
 # Enable strict error handling and verbose logging
 set -euo pipefail
+# Enable shell debugging
 set -x
 
-# Log everything to a file for later inspection
+# Log everything to a file for later inspection.  Review this log if any
+# installation step fails and rerun the offending commands after fixing
+# networking or package issues.
 LOG_FILE="${LOG_FILE:-setup.log}"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update && sudo apt-get dist-upgrade -y
+
+# Track packages that fail installation for troubleshooting
+FAILED_PKGS=()
+
+install_package() {
+    local pkg="$1"
+    # Attempt installation via apt, then fall back to pip and finally npm.
+    # Any package that still fails is recorded for manual investigation.
+    if ! sudo apt-get install -y "$pkg"; then
+        echo "Warning: failed to install $pkg via apt" >&2
+        if ! pip3 install --break-system-packages "$pkg"; then
+            echo "Warning: failed to install $pkg via pip" >&2
+            if ! sudo npm install -g "$pkg"; then
+                echo "Warning: failed to install $pkg via npm" >&2
+                FAILED_PKGS+=("$pkg")
+            fi
+        fi
+    fi
+}
 
 APT_PKGS=(
     build-essential clang clang-tidy clang-format clang-tools clangd
@@ -29,15 +51,7 @@ APT_PKGS=(
 )
 
 for pkg in "${APT_PKGS[@]}"; do
-    if ! sudo apt-get install -y "$pkg"; then
-        echo "Warning: failed to install $pkg via apt" >&2
-        if ! pip3 install --break-system-packages "$pkg"; then
-            echo "Warning: failed to install $pkg via pip" >&2
-            if ! sudo npm install -g "$pkg"; then
-                echo "Warning: failed to install $pkg via npm" >&2
-            fi
-        fi
-    fi
+    install_package "$pkg"
 done
 
 sudo apt-get clean
@@ -52,6 +66,7 @@ PIP_PKGS=(
 for pkg in "${PIP_PKGS[@]}"; do
     if ! pip3 install --break-system-packages "$pkg"; then
         echo "Warning: failed to install $pkg via pip" >&2
+        FAILED_PKGS+=("$pkg")
     fi
 done
 
@@ -63,6 +78,7 @@ NPM_PKGS=(eslint graphviz-cli)
 for pkg in "${NPM_PKGS[@]}"; do
     if ! sudo npm install -g "$pkg"; then
         echo "Warning: failed to install $pkg via npm" >&2
+        FAILED_PKGS+=("$pkg")
     fi
 done
 sudo npm cache clean --force >/dev/null 2>&1 || true
@@ -77,5 +93,11 @@ for url in "${EXTRA_URLS[@]}"; do
         echo "Warning: failed to download $url" >&2
     fi
 done
+
+# Report any packages that failed so manual troubleshooting can occur
+if [ ${#FAILED_PKGS[@]} -ne 0 ]; then
+    echo "The following packages failed to install: ${FAILED_PKGS[*]}" >&2
+    echo "Check $LOG_FILE for details and resolve the issues manually." >&2
+fi
 
 echo "Setup complete"
