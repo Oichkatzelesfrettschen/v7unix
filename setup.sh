@@ -1,6 +1,8 @@
 #!/bin/bash
 # Enable strict error handling and verbose logging
 set -euo pipefail
+# Timestamped debugging output
+export PS4='+ $(date "+%Y-%m-%dT%H:%M:%S") ${BASH_SOURCE}:${LINENO}: '
 # Enable shell debugging
 set -x
 
@@ -123,6 +125,14 @@ done
 sudo npm cache clean --force >/dev/null 2>&1 || true
 
 troubleshoot_failed_packages
+
+# Repeat troubleshooting up to three times if failures remain
+attempt=1
+while [ ${#FAILED_PKGS[@]} -ne 0 ] && [ $attempt -le 3 ]; do
+    echo "Troubleshooting attempt $attempt: ${FAILED_PKGS[*]}" >&2
+    troubleshoot_failed_packages
+    ((attempt++))
+done
 
 # Optional third-party tools
 EXTRA_URLS=(
