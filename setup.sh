@@ -12,7 +12,21 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 
 export DEBIAN_FRONTEND=noninteractive
 
-sudo apt-get update && sudo apt-get dist-upgrade -y
+retry() {
+    local n=0
+    until "$@"; do
+        ((n++))
+        if (( n >= 3 )); then
+            echo "command failed after $n attempts: $*" >&2
+            return 1
+        fi
+        echo "Retrying ($n)..." >&2
+        sleep 1
+    done
+}
+
+retry sudo apt-get update
+retry sudo apt-get dist-upgrade -y
 
 # Track packages that fail installation for troubleshooting
 FAILED_PKGS=()
@@ -21,8 +35,9 @@ install_package() {
     local pkg="$1"
     # Attempt installation via apt, then fall back to pip and finally npm.
     # Any package that still fails is recorded for manual investigation.
-    if ! sudo apt-get install -y "$pkg"; then
+    if ! retry sudo apt-get install -y "$pkg"; then
         echo "Warning: failed to install $pkg via apt" >&2
+        sudo apt-get -f install -y || true
         if ! pip3 install --break-system-packages "$pkg"; then
             echo "Warning: failed to install $pkg via pip" >&2
             if ! sudo npm install -g "$pkg"; then
@@ -99,5 +114,10 @@ if [ ${#FAILED_PKGS[@]} -ne 0 ]; then
     echo "The following packages failed to install: ${FAILED_PKGS[*]}" >&2
     echo "Check $LOG_FILE for details and resolve the issues manually." >&2
 fi
+
+# Troubleshooting Tips:
+#   * Verify network connectivity if downloads fail.
+#   * Run 'sudo dpkg --configure -a' && 'sudo apt-get -f install' for broken packages.
+#   * Review "$LOG_FILE" to identify failing commands and rerun them after fixing the underlying issue.
 
 echo "Setup complete"
