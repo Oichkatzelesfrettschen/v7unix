@@ -1,6 +1,8 @@
 #!/bin/bash
 # Enable strict error handling and verbose logging
 set -euo pipefail
+# For a breakdown of the packages installed by this script and their origins
+# (apt, pip, npm, etc.), see docs/PackageSources.md.
 # Timestamped debugging output
 export PS4='+ $(date "+%Y-%m-%dT%H:%M:%S") ${BASH_SOURCE}:${LINENO}: '
 # Enable shell debugging
